@@ -1,0 +1,40 @@
+import requests
+import os
+from lxml import etree
+from time import sleep
+from selenium import webdriver
+from tkinter import *
+window = Tk()
+window.title('百度图片爬虫')
+label1 = Label(window, text='请输入关键词')
+label1.grid(row=0, column=0)
+entry1 = Entry(window)
+entry1.grid(row=0, column=1)
+filepath = 'image2'
+if not os.path.exists(filepath):
+    os.mkdir(filepath)
+def spider():
+    url = 'https://image.baidu.com/'
+    chrome = webdriver.Chrome()
+    chrome.get(url)
+    chrome.maximize_window()
+    keyword = entry1.get()
+    chrome.find_element_by_id('kw').send_keys(keyword)
+    chrome.find_element_by_class_name('s_search').click()
+    for i in range(100, 10000, 1000):
+        sleep(1)
+        js = 'var action=document.documentElement.scrollTop={}'.format(i)
+        chrome.execute_script(js)
+    html = chrome.page_source
+    e = etree.HTML(html)
+    img_urls = e.xpath('//img[@class="main_img img-hover"]/./@data-imgurl')
+    for img_url in img_urls:
+        filename = img_url.split('/')[-1]
+        with open(filepath+'/'+filename, 'ab') as f:
+            response = requests.get(img_url)
+            f.write(response.content)
+Button(window, text='停止', command=window.quit).grid(row=0, column=3, padx=0, pady=5)
+Button(window, text='开始爬虫', command=spider).grid(row=0, column=2, padx=0, pady=5)
+window.mainloop()
+# print(etree.tostring(img_url).decode("utf-8"))
+# print(img_url)
